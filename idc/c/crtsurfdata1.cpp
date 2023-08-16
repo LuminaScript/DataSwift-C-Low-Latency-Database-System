@@ -9,11 +9,12 @@ CLogFile logfile(10);
 int main(int argc, char *argv[]){
  //inifile outpath logfile
  if(argc != 4){
-  printf("Using: ./crtsurfdata1 inifile outpath logfile\n");
-  printf("Example:/project/idc1/bin/crtsurfdata1 /project/idc1/ini/stcode.ini /tmp/surfdata /log/idc/crtsurfdata1.log\n\n");
-  printf("inifile  全国气象站点参数文件名。\n");
-  printf("outpath  全国气象站点数据文件存放的目录。\n");
-  printf("logfile  本程序运行的日志文件名。\n");
+  printf("Using: sudo ./crtsurfdata1 inifile outpath logfile\n");
+  printf("Example: sudo ./crtsurfdata1 /project/idc1/ini/stcode.ini /tmp/surfdata /log/idc/crtsurfdata1.log\n\n");
+  printf("inifile: National meteorological station parameter filename.\n");
+  printf("outpath: Directory where the national meteorological station data files are stored.\n");
+  printf("logfile: Log filename of this program's execution.\n");
+
   return -1;
  } 
 
