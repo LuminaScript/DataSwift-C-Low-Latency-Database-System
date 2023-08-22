@@ -6,11 +6,18 @@ PUBCPP = /home/yizhen/Desktop/project/public/_public.cpp
 
 CFLAGS = -g
 
-all: crtsurfdata1
+all: crtsurfdata1 crtsurfdata2 crtsurfdata3
 
 crtsurfdata1:crtsurfdata1.cpp
 	g++ $(CFLAGS) -o crtsurfdata1 crtsurfdata1.cpp $(PUBINCL) $(PUBCPP) -lm -lc
 	cp crtsurfdata1 ../bin/.
 
+crtsurfdata2:crtsurfdata2.cpp
+	g++ $(CFLAGS) -o crtsurfdata2 crtsurfdata2.cpp $(PUBINCL) $(PUBCPP) -lm -lc
+	cp crtsurfdata2 ../bin/.
+
+crtsurfdata3:crtsurfdata3.cpp
+	g++ $(CFLAGS) -o crtsurfdata3 crtsurfdata3.cpp $(PUBINCL) $(PUBCPP) -lm -lc
+	cp crtsurfdata3 ../bin/.
 clean:
-	rm -f crtsurfdata1 
+	rm -f crtsurfdata1  crtsurfdata2 crtsurfdata3
