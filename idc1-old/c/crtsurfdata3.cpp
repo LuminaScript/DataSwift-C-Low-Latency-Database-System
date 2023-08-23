@@ -22,19 +22,25 @@ vector<struct st_stcode> vstcode;
 // 把站点参数文件中加载到vstcode容器中。
 bool LoadSTCode(const char *inifile);
 
-// 全国气象站点分钟观测数据结构
+// Structure for minute-by-minute observation data from national meteorological stations
 struct st_surfdata
 {
-  char obtid[11];      // 站点代码。
-  char ddatetime[21];  // 数据时间：格式yyyymmddhh24miss
-  int  t;              // 气温：单位，0.1摄氏度。
-  int  p;              // 气压：0.1百帕。
-  int  u;              // 相对湿度，0-100之间的值。
-  int  wd;             // 风向，0-360之间的值。
-  int  wf;             // 风速：单位0.1m/s
-  int  r;              // 降雨量：0.1mm。
-  int  vis;            // 能见度：0.1米。
+  char obtid[11];      // Station code.
+  char ddatetime[21];  // Data time: format yyyymmddhh24miss
+  int  t;              // Temperature: in 0.1°C units.
+  int  p;              // Atmospheric pressure: in 0.1 hPa units.
+  int  u;              // Relative humidity: values between 0-100.
+  int  wd;             // Wind direction: values between 0-360.
+  int  wf;             // Wind speed: in 0.1 m/s units.
+  int  r;              // Rainfall: in 0.1mm units.
+  int  vis;            // Visibility: in 0.1 meter units.
 };
+
+vector<struct st_surfdata> vsurfdata;
+
+// 模拟生成全国气象站点的容器
+void CrtSurfData();
+
 
 vector<struct st_surfdata> vsurfdata;  // 存放全国气象站点分钟观测数据的容器
 
@@ -69,6 +75,7 @@ int main(int argc,char *argv[])
   // 把站点参数文件中加载到vstcode容器中。 
   if (LoadSTCode(argv[1])==false) return -1;
 
+  Crt
   // 模拟生成全国气象站点分钟观测数据，存放在vsurfdata容器中。
   CrtSurfData();
 

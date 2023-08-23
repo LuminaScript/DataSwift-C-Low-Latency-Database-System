@@ -209,6 +209,7 @@ bool CrtSurfFile(const char *outpath,const char *datafmt)
                    "\"u\":\"%d\",\"wd\":\"%d\",\"wf\":\"%.1f\",\"r\":\"%.1f\",\"vis\":\"%.1f\"}",\
          vsurfdata[ii].obtid,vsurfdata[ii].ddatetime,vsurfdata[ii].t/10.0,vsurfdata[ii].p/10.0,\
          vsurfdata[ii].u,vsurfdata[ii].wd,vsurfdata[ii].wf/10.0,vsurfdata[ii].r/10.0,vsurfdata[ii].vis/10.0);
+         
     if (ii<vsurfdata.size()-1) File.Fprintf(",\n");
     else   File.Fprintf("\n");
     // 以上几行代码有bug，应该修正如下：
