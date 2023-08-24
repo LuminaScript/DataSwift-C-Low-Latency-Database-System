@@ -1,10 +1,19 @@
 /*
  * @Author: YizhenZhang yz4401@columbia.edu
  * @Date: 2023-08-23 01:54:51
- * @Program: crtsurfdata5.cpp
+ * @Program: crtsurfdata.cpp
  */
 
+//task 1 增加生成历史数据文件的功能，为压缩文件和清理文件模块准备历史数据文件。ok
+
+//task 2 增加信号处理函数，处理2和15的信号。 ok
+
+//task 3 解决调用exit函数退出时局部对象没有调用析构两数的问题。
+
+//task 4 把心跳信息写入共享内存。
+
 #include "_public.h"
+CPActive PActive; //进程心跳
 
 struct st_stcode
 {
@@ -44,16 +53,20 @@ char strddatetime[21];
 // 模拟生成全国气象站点的容器
 void CrtSurfData();
 
+CFile File;
+
 // transfer climate data from vector into file
 bool CrtSurfFile(const char *outpath, const char *datafmt);
 
 CLogFile logfile(10);
 
+void EXIT(int sig); // 信号处理函数
+
 int main(int argc, char *argv[]){
  //inifile outpath logfile
- if(argc != 5){
-  printf("Using: sudo ./crtsurfdata5 inifile outpath logfile datafmt\n");
-  printf("Example: sudo ./crtsurfdata5 /home/yizhen/Desktop/project/idc/ini/stcode.ini /tmp/idc/surfdata /log/idc/crtsurfdata5.log xml, json, csv\n\n");
+ if(argc != 5 && argc != 6){
+  printf("Using: sudo ./crtsurfdata inifile outpath logfile datafmt [datatime(optional)]\n");
+  printf("Example: sudo ./crtsurfdata /home/yizhen/Desktop/project/idc/ini/stcode.ini /tmp/idc/surfdata /log/idc/crtsurfdata.log xml, json, csv 2021071023000\n\n");
   printf("inifile: National meteorological station parameter filename.\n");
   printf("outpath: Directory where the national meteorological station data files are stored.\n");
   printf("logfile: Log filename of this program's execution.\n");
@@ -61,23 +74,36 @@ int main(int argc, char *argv[]){
   return -1;
  } 
 
+ //不能放在打开日志的后面，否则会关闭日志的IO
+ CloseIOAndSignal(true);signal(SIGINT, EXIT);signal(SIGTERM,EXIT);
+
+
  if(logfile.Open(argv[3]) == false)
  {
   printf("logfile.Open(%s) failed. \n", argv[3]);
   return -1;
  }
- logfile.Write("crtsurfdata1 starting ...\n");
+ logfile.Write("crtsurfdata starting ...\n");
+
+ PActive.AddPInfo(20,"crtsurfdata" ); // do not need to update hearbeat beacause the program runs too short
 
 if (LoadSTCode(argv[1]) == false)
         return -1;
+memset(strddatetime, 0, sizeof(strddatetime));
+if (argc == 5)
+        LocalTime(strddatetime, "yyyymmddhh24miss");
+else
+        STRCPY(strddatetime, sizeof(strddatetime), argv[5]);
+
 CrtSurfData();
 
 if(strstr(argv[4], "xml") != 0) CrtSurfFile(argv[2], "xml");
 
 if(strstr(argv[4], "json") != 0) CrtSurfFile(argv[2], "json");
+
 if(strstr(argv[4], "csv") != 0) CrtSurfFile(argv[2], "csv");
 
- logfile.Write("crtsurfdata1 stopped ...\n");
+ logfile.Write("crtsurfdata stopped ...\n");
 
 
  return 0;
@@ -85,8 +111,6 @@ if(strstr(argv[4], "csv") != 0) CrtSurfFile(argv[2], "csv");
 
 bool LoadSTCode(const char *inifile)
 {
-        CFile File;
-
         // open station data file
         if (File.Open(inifile, "r") == false)
         {
@@ -174,8 +198,7 @@ bool CrtSurfFile(const char *outpath, const char *datafmt)
                 File.Fprintf("站点代码,数据时间,气温,气压,相对湿度,风向,风速,降雨量,能见度\n");
         }
         
-        if (strcmp(datafmt,"xml")==0) File.Fprintf("<data>\n");
-        if (strcmp(datafmt,"json")==0) File.Fprintf("{\"data\":[\n");
+
 
 
         // traverse vsurfdata container
@@ -198,21 +221,34 @@ bool CrtSurfFile(const char *outpath, const char *datafmt)
 
                 if (strcmp(datafmt,"json")==0)
                 {
-                File.Fprintf("{\"obtid\":\"%s\",\"ddatetime\":\"%s\",\"t\":\"%.1f\",\"p\":\"%.1f\","\
-                                "\"u\":\"%d\",\"wd\":\"%d\",\"wf\":\"%.1f\",\"r\":\"%.1f\",\"vis\":\"%.1f\"}",\
-                        vsurfdata[ii].obtid,vsurfdata[ii].ddatetime,vsurfdata[ii].t/10.0,vsurfdata[ii].p/10.0,\
-                        vsurfdata[ii].u,vsurfdata[ii].wd,vsurfdata[ii].wf/10.0,vsurfdata[ii].r/10.0,vsurfdata[ii].vis/10.0);
-                if (ii<vsurfdata.size()-1) File.Fprintf(",\n");
-                else   File.Fprintf("\n");
+                        File.Fprintf("{\"obtid\":\"%s\",\"ddatetime\":\"%s\",\"t\":\"%.1f\",\"p\":\"%.1f\","\
+                                        "\"u\":\"%d\",\"wd\":\"%d\",\"wf\":\"%.1f\",\"r\":\"%.1f\",\"vis\":\"%.1f\"}",\
+                                vsurfdata[ii].obtid,vsurfdata[ii].ddatetime,vsurfdata[ii].t/10.0,vsurfdata[ii].p/10.0,\
+                                vsurfdata[ii].u,vsurfdata[ii].wd,vsurfdata[ii].wf/10.0,vsurfdata[ii].r/10.0,vsurfdata[ii].vis/10.0);
+                        if (ii<vsurfdata.size()-1) File.Fprintf(",\n");
+                        else File.Fprintf("\n");
                 }
 
 
         }
+
+        if (strcmp(datafmt,"xml")==0) File.Fprintf("<data>\n");
+        if (strcmp(datafmt,"json")==0) File.Fprintf("{\"data\":[\n");
+
+        sleep(10);
         // close file
         File.CloseAndRename();
+
+        UTime(strFileName, strddatetime); // change file's time attribute
 
         // write success log
         logfile.Write("Successfully generated data file %s, data time %s, record data %d. \n", strFileName, strddatetime, vsurfdata.size());
 
         return true;
+}
+
+//程序退出和信号2、15信号处理代码
+void EXIT(int sig){
+        logfile.Write("程序退出, sig = %d\n\n", sig);
+        exit(0);
 }
