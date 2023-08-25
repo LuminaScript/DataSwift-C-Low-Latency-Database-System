@@ -6,7 +6,7 @@ PUBCPP = /home/yizhen/Desktop/project/public/_public.cpp
 
 CFLAGS = -g
 
-all: procctl checkproc book10 gzipfiles
+all: procctl checkproc book10 gzipfiles deletefiles
 
 procctl:procctl.cpp
 	g++ -o procctl procctl.cpp
@@ -21,5 +21,7 @@ book10: book10.cpp
 gzipfiles:gzipfiles.cpp
 	g++ $(CFLAGS) -o gzipfiles gzipfiles.cpp $(PUBINCL) $(PUBCPP) -lm -lc
 
+deletefiles: deletefiles.cpp
+	g++ $(CFLAGS) -o deletefiles deletefiles.cpp $(PUBINCL) $(PUBCPP) -lm -lc
 clean:
-	rm -f procctl checkproc book10 gzipfiles
+	rm -f procctl checkproc book10 gzipfiles deletefiles
