@@ -66,7 +66,7 @@ int main(int argc, char *argv[]){
  //inifile outpath logfile
  if(argc != 5 && argc != 6){
   printf("Using: sudo ./crtsurfdata inifile outpath logfile datafmt [datatime(optional)]\n");
-  printf("Example: sudo ./crtsurfdata /home/yizhen/Desktop/project/idc/ini/stcode.ini /tmp/idc/surfdata /log/idc/crtsurfdata.log xml, json, csv 2021071023000\n\n");
+  printf("Example: sudo ./crtsurfdata /home/yizhen/Desktop/project/idc/ini/stcode.ini /tmp/idc/surfdata /log/idc/crtsurfdata.log xml,json,csv 2021071023000\n\n");
   printf("inifile: National meteorological station parameter filename.\n");
   printf("outpath: Directory where the national meteorological station data files are stored.\n");
   printf("logfile: Log filename of this program's execution.\n");
