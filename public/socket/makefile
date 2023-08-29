@@ -1,4 +1,4 @@
-all:demo01 demo02 demo03 demo04 demo05 demo06 demo07 demo08 demo10 demo11 demo12\
+all:demo01 demo02 demo03 demo04 demo05 demo06 demo07 demo07new  demo08 demo08new demo10 demo11 demo12\
     demo13 demo14 demo31 demo32 demo33 demo20 demo26 demo27
 
 demo01:demo01.cpp
@@ -22,8 +22,14 @@ demo06:demo06.cpp
 demo07:demo07.cpp
 	g++ -g -o demo07 demo07.cpp ../_public.cpp -lm -lc
 
+demo07new:demo07new.cpp
+	g++ -g -o demo07new demo07new.cpp ../_public.cpp -lm -lc
+
 demo08:demo08.cpp
 	g++ -g -o demo08 demo08.cpp ../_public.cpp -lm -lc
+
+demo08new:demo08new.cpp
+	g++ -g -o demo08new demo08new.cpp ../_public.cpp -lm -lc
 
 demo10:demo10.cpp
 	g++ -g -o demo10 demo10.cpp ../_public.cpp -lm -lc
@@ -59,5 +65,5 @@ demo27:demo27.cpp
 	g++ -g -o demo27 demo27.cpp ../_public.cpp -lm -lc
 
 clean:
-	rm demo01 demo02 demo03 demo04 demo05 demo06 demo07 demo08 demo10 demo11 demo12
+	rm demo01 demo02 demo03 demo04 demo05 demo06 demo07 demo07new demo08 demo08new demo10 demo11 demo12
 	rm demo13 demo14 demo31 demo32 demo33 demo20 demo26 demo27
