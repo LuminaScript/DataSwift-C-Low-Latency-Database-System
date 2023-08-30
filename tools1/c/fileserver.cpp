@@ -2,6 +2,24 @@
  * Program: @fileserver.cpp
 */
 #include "_public.h"
+struct st_arg
+{
+  int clienttype;
+  char ip[31];
+  int port;
+  int ptype;
+  char clientpath[301];
+  char clientpathbak[301];
+  bool andchild;
+  char matchname[301];
+  char srvpath[301];
+  int timetvl;
+  int timeout;
+  char pname[51];
+} starg;
+bool _xmltoarg(char *strxmlbuffer);
+
+CTcpClient TcpClient;
 
 CLogFile logfile;      // 服务程序的运行日志。
 CTcpServer TcpServer;  // 创建服务端对象。
@@ -63,25 +81,9 @@ int main(int argc,char *argv[])
 
     TcpServer.CloseListen();
 
-    // 子进程与客户端进行通讯，处理业务。 
+    
 
-
-    // 与客户端通讯，接收客户端发过来的报文后，回复ok。
-    while (1)
-    {
-      memset(strrecvbuffer,0,sizeof(strrecvbuffer));
-      memset(strsendbuffer,0,sizeof(strsendbuffer));
-
-      if (TcpServer.Read(strrecvbuffer,atoi(argv[3]))==false) break; // 接收客户端的请求报文。
-      logfile.Write("接收：%s\n",strrecvbuffer);
-
-      // 处理业务的主函数。
-      if (_main(strrecvbuffer,strsendbuffer)==false) break;
-
-      if (TcpServer.Write(strsendbuffer)==false) break; // 向客户端发送响应结果。
-      logfile.Write("发送：%s\n",strsendbuffer);
-    }
-
+   
     ChldEXIT(0);
   }
 }
@@ -114,31 +116,6 @@ void ChldEXIT(int sig)
   exit(0);
 }
 
-// 处理业务的主函数。
-bool _main(const char *strrecvbuffer,char *strsendbuffer)
-{
-  // 解析strrecvbuffer，获取服务代码（业务代码）。
-  int isrvcode=-1;
-  GetXMLBuffer(strrecvbuffer,"srvcode",&isrvcode);
-
-  if (isrvcode!=1)
-  {
-    strcpy(strsendbuffer,"<retcode>-1</retcode><message>用户未登录。</message>"); return true;
-  }
-
-  // 处理每种业务。
-  switch (isrvcode)
-  {
-    case 0:   // 心跳。
-      srv000(strrecvbuffer,strsendbuffer); break;
-    case 1:   // 登录。
-      srv001(strrecvbuffer,strsendbuffer); break;
-    default:
-      logfile.Write("业务代码不合法：%s\n",strrecvbuffer); return false;
-  }
-
-  return true;
-}
 
 // 心跳。
 bool srv000(const char *strrecvbuffer,char *strsendbuffer)
@@ -149,9 +126,19 @@ bool srv000(const char *strrecvbuffer,char *strsendbuffer)
 }
 
 // 登录。
-bool srv001(const char *strrecvbuffer,char *strsendbuffer)
+bool ClientLogin()
 {
-  // <srvcode>1</srvcode><tel>1392220000</tel><password>123456</password>
+
+  memset(strsendbuffer, 0, sizeof(strsendbuffer));
+  memset(strrecvbuffer, 0, sizeof(strrecvbuffer));
+
+  if(TcpServer.Read(strrecvbuffer, 20) == false){
+    logfile.Write("TcpServer.Read() failed. \n");
+    return false;
+  }
+  logfile.Write("strrecvbuffer = %s", strrecvbuffer);
+
+  //
 
   // 解析strrecvbuffer，获取业务参数。
   char tel[21],password[31];
@@ -170,3 +157,50 @@ bool srv001(const char *strrecvbuffer,char *strsendbuffer)
   return true;
 }
 
+
+
+// 把xml解析到参数starg结构
+bool _xmltoarg(char *strxmlbuffer)
+{
+  memset(&starg,0,sizeof(struct st_arg));
+
+  GetXMLBuffer(strxmlbuffer,"ip",starg.ip);
+  if (strlen(starg.ip)==0) { logfile.Write("ip is null.\n"); return false; }
+
+  GetXMLBuffer(strxmlbuffer,"port",&starg.port);
+  if ( starg.port==0) { logfile.Write("port is null.\n"); return false; }
+
+  GetXMLBuffer(strxmlbuffer,"ptype",&starg.ptype);
+  if ((starg.ptype!=1)&&(starg.ptype!=2)) { logfile.Write("ptype not in (1,2).\n"); return false; }
+
+  GetXMLBuffer(strxmlbuffer,"clientpath",starg.clientpath);
+  if (strlen(starg.clientpath)==0) { logfile.Write("clientpath is null.\n"); return false; }
+
+  GetXMLBuffer(strxmlbuffer,"clientpathbak",starg.clientpathbak);
+  if ((starg.ptype==2)&&(strlen(starg.clientpathbak)==0)) { logfile.Write("clientpathbak is null.\n"); return false; }
+
+  GetXMLBuffer(strxmlbuffer,"andchild",&starg.andchild);
+
+  GetXMLBuffer(strxmlbuffer,"matchname",starg.matchname);
+  if (strlen(starg.matchname)==0) { logfile.Write("matchname is null.\n"); return false; }
+
+  GetXMLBuffer(strxmlbuffer,"srvpath",starg.srvpath);
+  if (strlen(starg.srvpath)==0) { logfile.Write("srvpath is null.\n"); return false; }
+
+  GetXMLBuffer(strxmlbuffer,"timetvl",&starg.timetvl);
+  if (starg.timetvl==0) { logfile.Write("timetvl is null.\n"); return false; }
+
+  // 扫描本地目录文件的时间间隔，单位：秒。
+  // starg.timetvl没有必要超过30秒。
+  if (starg.timetvl>30) starg.timetvl=30;
+
+  // 进程心跳的超时时间，一定要大于starg.timetvl，没有必要小于50秒。
+  GetXMLBuffer(strxmlbuffer,"timeout",&starg.timeout);
+  if (starg.timeout==0) { logfile.Write("timeout is null.\n"); return false; }
+  if (starg.timeout<50) starg.timeout=50;
+
+  GetXMLBuffer(strxmlbuffer,"pname",starg.pname,50);
+  if (strlen(starg.pname)==0) { logfile.Write("pname is null.\n"); return false; }
+
+  return true;
+}
