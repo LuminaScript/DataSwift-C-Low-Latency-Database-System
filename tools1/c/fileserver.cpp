@@ -28,7 +28,7 @@ char strrecvbuffer[1024];
 char strsendbuffer[1024];
 void FathEXIT(int sig);  // 父进程退出函数。
 void ChldEXIT(int sig);  // 子进程退出函数。
-
+void RecvFilesMain();
 // 处理业务的主函数。
 bool _main(const char *strrecvbuffer,char *strsendbuffer);
 
@@ -36,7 +36,7 @@ bool _main(const char *strrecvbuffer,char *strsendbuffer);
 bool srv000(const char *strrecvbuffer,char *strsendbuffer);
 
 // 登录业务处理函数。
-bool srv001(const char *strrecvbuffer,char *strsendbuffer);
+bool ClientLogin();
 
 
 // 转账。
@@ -80,6 +80,11 @@ int main(int argc,char *argv[])
     signal(SIGINT,ChldEXIT); signal(SIGTERM,ChldEXIT);
 
     TcpServer.CloseListen();
+
+    if(ClientLogin() == false) ChldEXIT(-1);
+
+    //判断客户端类型
+    if (starg.clienttype == 1) RecvFilesMain();
 
     
 
@@ -139,20 +144,16 @@ bool ClientLogin()
   logfile.Write("strrecvbuffer = %s", strrecvbuffer);
 
   //
-
-  // 解析strrecvbuffer，获取业务参数。
-  char tel[21],password[31];
-  GetXMLBuffer(strrecvbuffer,"tel",tel,20);
-  GetXMLBuffer(strrecvbuffer,"password",password,30);
-
-  // 处理业务。
-  // 把处理结果生成strsendbuffer。
-  if ( (strcmp(tel,"1392220000")==0) && (strcmp(password,"123456")==0) )
-  {
-    strcpy(strsendbuffer,"<retcode>0</retcode><message>成功。</message>"); 
-  }
+  _xmltoarg(strrecvbuffer);
+  if((starg.clienttype != 1) && (starg.clienttype != 2)) strcpy(strsendbuffer, "ok");
   else
-    strcpy(strsendbuffer,"<retcode>-1</retcode><message>失败。</message>");
+    strcpy(strsendbuffer, "failed");
+
+ if(TcpServer.Write(strsendbuffer) == false){
+    logfile.Write("TcpServer.Write() failed. \n");
+    return false;
+  }
+  logfile.Write("%s login %s. \n", TcpServer.GetIP(), strsendbuffer);
 
   return true;
 }
@@ -203,4 +204,28 @@ bool _xmltoarg(char *strxmlbuffer)
   if (strlen(starg.pname)==0) { logfile.Write("pname is null.\n"); return false; }
 
   return true;
+}
+
+void RecvFilesMain(){
+  while (true){
+    // 心跳报文
+    memset(strsendbuffer, 0, sizeof(strsendbuffer));
+    memset(strrecvbuffer, 0, sizeof(strrecvbuffer));
+
+    if(TcpServer.Read(strrecvbuffer, starg.timetvl + 10) == false)
+    {
+      logfile.Write("TcpServer.Read() failed. \n"); return;
+    }
+    logfile.Write("strrecvbuffer = %s", strrecvbuffer);
+
+    if(strcmp(strrecvbuffer, "<activetest>ok</activetest>") == 0)
+    {
+      strcpy(strsendbuffer, "ok");
+      logfile.Write("strsendbuffer = %s\n", strsendbuffer);
+      if(TcpServer.Write(strsendbuffer) == false){
+        logfile.Write("TcpServer.Write() failed. \n"); return;
+      }
+    }
+    
+  }
 }
