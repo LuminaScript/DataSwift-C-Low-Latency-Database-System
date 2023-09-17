@@ -18,5 +18,5 @@ DataSwift is a C++ low-latency database system designed to handle real-time data
 - Achieved an impressive 15mbps latency while processing a substantial 10GB of data.
 
 ## Learn More
-For detailed information, code access, and project updates, please visit the [GitHub repository](https://github.com/LuminaScript/TwitTalk).
+For detailed information, code access, and project updates, please conduct the author.
 
